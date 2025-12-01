@@ -1,5 +1,7 @@
 from enum import Enum
 
+"""All types of markdown block we can have to convert after into ParentNode"""
+
 class BlockType(Enum):
     PARAGRAPH = "paragraph"
     HEADING = "heading"

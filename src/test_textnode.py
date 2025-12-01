@@ -3,6 +3,8 @@ import unittest
 from textnode import TextNode, TextType
 from functions import *
 
+"""All unit tests to check if the class (HTMLNode) and instances (LeafNode, ParentNode) works"""
+
 
 class TestTextNode(unittest.TestCase):
     def test_eq(self):

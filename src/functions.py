@@ -5,7 +5,11 @@ import os
 import shutil
 import re
 
+"""Here all the functions to transform markdown into HTML (TextNode into Leaf Node, markdown block into Parent Node..),
+ copy files from 'content' and 'static' dir into the 'docs' (final directory) and generate the page """
+
 def text_node_to_html_node(text_node):
+    #Convert each type of TextNode into LeafNode with correspondants value
     if text_node.text_type not in TextType:
         raise Exception("Type used is unknown")
     if text_node.text_type == TextType.TEXT:
@@ -22,14 +26,18 @@ def text_node_to_html_node(text_node):
         return LeafNode("img","",{"src": f"{text_node.url}","alt": f"{text_node.text}"})
 
 def split_nodes_delimiter(old_nodes, delimiter, text_type):
+    """Function to split a TextNode into many textnode using a delimiter to split the basic text from special like Bold (**) or Italic (_)"""
     new_nodes = []
     for node in old_nodes:
+        #if node is not a text, add directly in the list of split nodes
         if node.text_type != TextType.TEXT:
             new_nodes.append(node)            
         else:
+            #else split the node depending on delimiter and check if the length of text split is even or odd to see if the syntax is correct
             text_split = node.text.split(delimiter)
             if len(text_split) > 1 and len(text_split) % 2 == 0:
                 raise Exception("error: Invalid Markdown Syntax")
+            #for each part, add into the list the basic text and the special text splitted
             for i,part in enumerate(text_split):
                 if not part:
                     continue
@@ -41,15 +49,18 @@ def split_nodes_delimiter(old_nodes, delimiter, text_type):
     return new_nodes
 
 def extract_markdown_images(text):
+    #function to find images tag and image link into a text using regex
     matches = re.findall(r"!\[([^\[\]]*)\]\(([^\(\)]*)\)",text)
     return matches
 
 def extract_markdown_links(text):
+    #function to find link tag and link into a text using regex
     matches = re.findall(r"(?<!!)\[([^\[\]]*)\]\(([^\(\)]*)\)",text)
     return matches
 
 
 def split_nodes_image(old_nodes):
+    """Function to split a TextNode into many textnode to split the basic text from images using the func 'extract_markdown_images'"""
     new_nodes = []
     for old_node in old_nodes:
         if old_node.text_type != TextType.TEXT:
@@ -80,6 +91,7 @@ def split_nodes_image(old_nodes):
 
 
 def split_nodes_link(old_nodes):
+    """Function to split a TextNode into many textnode to split the basic text from links using the func 'extract_markdown_links' """
     new_nodes = []
     for old_node in old_nodes:
         if old_node.text_type != TextType.TEXT:
@@ -104,6 +116,7 @@ def split_nodes_link(old_nodes):
 
 
 def text_to_textnodes(text):
+    """Function which combine all previous functions to split all text nodes depending of type and delimiter"""
     node = TextNode(text,TextType.TEXT,)
     node = split_nodes_delimiter([node],"**",TextType.BOLD)
     node = split_nodes_delimiter(node,"_",TextType.ITALIC)
@@ -114,11 +127,15 @@ def text_to_textnodes(text):
 
 
 def markdown_to_blocks(markdown):
+    """Functions to split the markdown text structure into blocks which contains ParentNode.
+    
+    Markdown Text >>> Split in Blocks >>> Each blocks convert in type (paragraph, header...) >>> convert in ParentNode to contains other Node"""
     split_blocks = []
     markdown = markdown.split("\n\n")
     for block in markdown:
         if block == "":
             continue
+        #delete the whitetrails and spaces in the blocks
         block = block.strip()
         split_blocks.append(block)
     
@@ -127,6 +144,13 @@ def markdown_to_blocks(markdown):
 
 
 def block_to_block_type(block):
+    """Detect each type of block:
+    start with '#' >>> HEADING,
+    start and end with '```' >>> CODE,
+    each line starts with '>' >>> QUOTE,
+    each line starts with '- ' >>> UNORDERED LIST,
+    each line starts with a incrementing number >>> ORDERED LIST"""
+
     lines = block.split("\n")
 
     if block.startswith(("# ", "## ", "### ", "#### ", "##### ", "###### ")):
@@ -153,6 +177,8 @@ def block_to_block_type(block):
     return BlockType.PARAGRAPH
 
 def markdown_to_html_node(markdown):
+    """Functions to split all blocks in the markdown text 'markdown_to_blocks' and convert depending of the type in corresponding ParentNode 'block_to_html_node',
+    after compact all the children (all converted blocks) into a <div> Parent Node"""
     blocks = markdown_to_blocks(markdown)
     children = []
     for block in blocks:
@@ -160,7 +186,7 @@ def markdown_to_html_node(markdown):
         children.append(html_node)
     return ParentNode("div", children, None)
 
-
+"""The next functions are to convert in corresponding ParentNode each block depending on his type, one function for one type"""
 def block_to_html_node(block):
     block_type = block_to_block_type(block)
     if block_type == BlockType.PARAGRAPH:
@@ -251,40 +277,59 @@ def quote_to_html_node(block):
     
 
 def copy_files_recursive(source_dir_path, dest_dir_path):
+    """This function copy all static files (css, images) into the destination directory"""
+
+    #delete the destination dir to clean up
     if not os.path.exists(dest_dir_path):
         os.mkdir(dest_dir_path)
 
+    #for each filename, copy the struct of source path into the dest path
     for filename in os.listdir(source_dir_path):
         from_path = os.path.join(source_dir_path, filename)
         dest_path = os.path.join(dest_dir_path, filename)
         print(f" * {from_path} -> {dest_path}")
         if os.path.isfile(from_path):
+            #copy the src directory, not only the file
             shutil.copy(from_path, dest_path)
         else:
+            #move forward in the directory tree each iteration
             copy_files_recursive(from_path, dest_path)
 
 def extract_title(markdown):
+    """extract the title from the markdown"""
+
     markdown_header = markdown.split("\n")
     if markdown_header[0].startswith("#"):
         title = markdown_header[0].strip("# ")
         return title
     raise Exception("Error: There is no title in the markdown")
 
-
-def generate_page(from_path, template_path, dest_path):
+"""This functions are here to generate all pages structure and convert .md into .html, from the src path into the dest path using the models 'template.html',
+replace the title and content from the template with the title 'extract_title' func and content 'markdown_to_html_node', add the basepath to set the URL when
+deploy the website with Github
+"""
+def generate_page(from_path, template_path, dest_path,basepath):
     print(f"Generating page from {from_path} to {dest_path} using {template_path}.")
+    #open the markdown file and template to read their contains
     markdown_file = open(from_path,"r")
     markdown_file_text = markdown_file.read()
     template_file = open(template_path,"r")
     template_file_text = template_file.read()
 
+    #convert the markdown into html
     html_node = markdown_to_html_node(markdown_file_text)
     html_string = html_node.to_html()
 
+    #extract the title and replace the template content and title with the markdown contain
     title = extract_title(markdown_file_text)
     template_file_text = template_file_text.replace("{{ Title }}",title)
     template_file_text = template_file_text.replace("{{ Content }}",html_string)
 
+    #set the basepath for each source for the links and images
+    template_file_text = template_file_text.replace('href="/', 'href="' + basepath)
+    template_file_text = template_file_text.replace('src="/', 'src="' + basepath)
+
+    #with the same structure, add the new files created in the destination directory
     dir_path = os.path.dirname(dest_path)
     os.makedirs(dir_path,exist_ok=True)
     new_file = open(dest_path,"w")
@@ -294,18 +339,20 @@ def generate_page(from_path, template_path, dest_path):
     template_file.close()
     new_file.close()
 
-def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
+def generate_pages_recursive(dir_path_content, template_path, dest_dir_path,basepath):
     if not os.path.exists(dest_dir_path):
         os.mkdir(dest_dir_path)
 
+    #to add more one page in the website
     for filename in os.listdir(dir_path_content):
         from_path = os.path.join(dir_path_content, filename)
         if os.path.isfile(from_path) and from_path.endswith(".md"):
             html_dest = os.path.join(dest_dir_path, "index.html")
-            generate_page(from_path, template_path, html_dest)
+            generate_page(from_path, template_path, html_dest,basepath)
         else:
             new_dest_dir = os.path.join(dest_dir_path, filename)
-            generate_pages_recursive(from_path, template_path, new_dest_dir)
+            #move forward in the directory tree each iteration
+            generate_pages_recursive(from_path, template_path, new_dest_dir,basepath)
 
 
     

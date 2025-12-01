@@ -3,7 +3,7 @@ import unittest
 from htmlnode import HTMLNode, LeafNode, ParentNode
 from functions import *
 
-
+"""All unit tests to check if the class and instances (LeafNode, ParentNode) of HTMLNode works"""
 
 class TestHTMLNode(unittest.TestCase):
     def test_eq(self):

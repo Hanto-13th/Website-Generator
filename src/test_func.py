@@ -2,6 +2,8 @@ import unittest
 
 from functions import *
 
+"""All unit test to check if all functions works"""
+
 class TestFunctions(unittest.TestCase):
     def test_delim_bold(self):
         node = TextNode("This is text with a **bolded** word", TextType.TEXT)

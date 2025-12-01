@@ -1,5 +1,7 @@
 from enum import Enum
 
+"""Here the differents type of TextNode we can have to convert after into LeafNode"""
+
 class TextType(Enum):
     TEXT = "text"
     IMAGE = "img"
@@ -8,7 +10,7 @@ class TextType(Enum):
     BOLD = "bold"
     CODE = "code"
 
-
+"""The class for each TextNode from markdown file, with text, type and URL if it's an image or a link"""
 class TextNode():
     def __init__(self,text,type,url=None):
         self.text = text
