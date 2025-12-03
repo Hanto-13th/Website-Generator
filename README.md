@@ -5,9 +5,9 @@
 
 ## ⚠️ Important Notes
 
-*⚠️ Some scripts (like main.sh or build.sh) are intended only for local testing.*
+⚠️ Some scripts (like main.sh or build.sh) are intended only for local testing.
 
-*⚠️ For best results, make sure your Markdown files are properly structured.*
+⚠️ For best results, make sure your Markdown files are properly structured.
 **Actually the Markdown syntax accepted:**
 - The header (# ) and multiples (1-6 '#')
 - Bold text (**)
@@ -19,7 +19,7 @@
 - Image `![image]` follows with the path of your image between parentheses `('IMAGE_PATH')`
 - Link `[link]` follows with the path of your link between parentheses `('LINK_PATH')`
 
-*⚠️ The generator outputs static HTML — any dynamic features must be manually added using JS/CSS.*
+⚠️ The generator outputs static HTML — any dynamic features must be manually added using JS/CSS.
 
 ### ✨ Features
 
